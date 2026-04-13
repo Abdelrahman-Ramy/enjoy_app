@@ -1,4 +1,5 @@
 import 'package:enjoy_app/core/constant/app_colors.dart';
+import 'package:enjoy_app/features/history/views/history_view.dart';
 import 'package:enjoy_app/features/home/views/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';

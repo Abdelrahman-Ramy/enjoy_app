@@ -1,4 +1,3 @@
-import 'package:enjoy_app/core/widgets/is_running_tab.dart';
 import 'package:enjoy_app/features/home/views/playstation_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -13,20 +12,17 @@ class BilliardsBody extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const IsRunningTab(),
-            Gap(15.h),
-            const PlaystationCard(
+            Gap(70.h),
+            PlaystationCard(
               cardName: 'Billiards',
               isType: false,
               deviceNumber: '01',
-              isRunning: true,
             ),
             Gap(12.h),
-            const PlaystationCard(
+            PlaystationCard(
               cardName: 'Billiards',
               isType: false,
               deviceNumber: '02',
-              isRunning: false,
             ),
             Gap(20.h),
           ],

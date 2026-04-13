@@ -5,6 +5,7 @@ import 'package:enjoy_app/features/home/views/ping_pong_body.dart';
 import 'package:enjoy_app/features/home/views/playstation_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:gap/gap.dart';
 
 class HomeView extends StatefulWidget {
   static const String routeName = 'HomeScreen';
@@ -53,6 +54,7 @@ class _HomeViewState extends State<HomeView> {
           padding: EdgeInsets.symmetric(horizontal: 5.w),
           child: Column(
             children: [
+              Gap(5.h),
               Container(
                 decoration: BoxDecoration(
                   color: AppColors.primaryColor,

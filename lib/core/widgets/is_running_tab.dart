@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class IsRunningTab extends StatefulWidget {
-  const IsRunningTab({super.key});
+  final Function(int) onChanged;
+  const IsRunningTab({super.key, required this.onChanged});
 
   @override
   State<IsRunningTab> createState() => _IsRunningTabState();
@@ -14,23 +15,23 @@ class _IsRunningTabState extends State<IsRunningTab> {
 
   @override
   Widget build(BuildContext context) {
+    final titles = ['All', 'Available', 'Running'];
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      padding: EdgeInsets.all(4),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: AppColors.primaryColor,
         borderRadius: BorderRadius.circular(20.r),
       ),
       child: Row(
         children: List.generate(3, (index) {
-          final titles = ['All', 'Available', 'Running'];
-
           return Expanded(
             child: GestureDetector(
               onTap: () {
                 setState(() {
                   selectedIndex = index;
                 });
+                widget.onChanged(index);
               },
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 10.h),
