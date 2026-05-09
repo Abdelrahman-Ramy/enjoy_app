@@ -1,8 +1,10 @@
 import 'package:enjoy_app/core/constant/app_colors.dart';
 import 'package:enjoy_app/core/constant/app_styles.dart';
+import 'package:enjoy_app/features/history/views/history_view.dart';
 import 'package:enjoy_app/features/home/views/billiards_body.dart';
 import 'package:enjoy_app/features/home/views/ping_pong_body.dart';
 import 'package:enjoy_app/features/home/views/playstation_body.dart';
+import 'package:enjoy_app/features/settings/views/settings_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -25,19 +27,27 @@ class _HomeViewState extends State<HomeView> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: AppColors.primaryColor,
-          leading: Icon(
-            Icons.menu,
-            fontWeight: FontWeight.bold,
-            size: 26.sp,
-            color: AppColors.whiteColor,
+          leading: GestureDetector(
+            onTap: () => Navigator.pushNamed(context, HistoryView.routeName),
+            child: Icon(
+              Icons.menu,
+              fontWeight: FontWeight.bold,
+              size: 26.w,
+              color: AppColors.whiteColor,
+            ),
           ),
           actions: [
             Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Icon(
-                Icons.settings,
-                size: 28.sp,
-                color: AppColors.whiteColor,
+              padding: EdgeInsets.all(8.r),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushNamed(context, SettingsView.routeName);
+                },
+                child: Icon(
+                  Icons.settings,
+                  size: 28.w,
+                  color: AppColors.whiteColor,
+                ),
               ),
             ),
           ],
@@ -93,7 +103,7 @@ class _HomeViewState extends State<HomeView> {
                               child: Text(
                                 titles[index],
                                 style: TextStyle(
-                                  fontSize: 18,
+                                  fontSize: 16.sp,
                                   color: selectedIndex == index
                                       ? AppColors.whiteColor
                                       : AppColors.greyColor,

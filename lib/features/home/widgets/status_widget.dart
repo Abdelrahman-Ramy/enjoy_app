@@ -19,7 +19,7 @@ class StatusWidget extends StatelessWidget {
           color: isRunning == true
               ? Colors.red.withOpacity(0.5)
               : Colors.green.withOpacity(0.5),
-          width: 1.5.w,
+          width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
@@ -38,15 +38,13 @@ class StatusWidget extends StatelessWidget {
             width: 10.w,
             height: 10.h,
             decoration: BoxDecoration(
-              color: isRunning == true
-                  ? Colors.redAccent
-                  : Colors.greenAccent,
+              color: isRunning == true ? Colors.redAccent : Colors.greenAccent,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: isRunning == true ?
-                  Colors.redAccent.withOpacity(0.8):
-                   Colors.greenAccent.withOpacity(0.8),
+                  color: isRunning == true
+                      ? Colors.redAccent.withOpacity(0.8)
+                      : Colors.greenAccent.withOpacity(0.8),
                   blurRadius: 8.r,
                   spreadRadius: 1.r,
                 ),
@@ -55,13 +53,9 @@ class StatusWidget extends StatelessWidget {
           ),
           Gap(12.w),
           Text(
-            isRunning == true ?
-            'RUNNING':
-            'AVAILABLE',
+            isRunning == true ? 'RUNNING' : 'AVAILABLE',
             style: TextStyle(
-              color: isRunning == true ?
-              Colors.redAccent:
-              Colors.greenAccent,
+              color: isRunning == true ? Colors.redAccent : Colors.greenAccent,
               fontWeight: FontWeight.bold,
               fontSize: 12.sp,
             ),

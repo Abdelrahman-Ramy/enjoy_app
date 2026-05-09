@@ -26,8 +26,8 @@ class CustomCardTime extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 140.w,
-            height: 110.h,
+            width: 130.w,
+            height: 125.h,
             decoration: BoxDecoration(
               color: AppColors.darkPrimaryColor,
               borderRadius: BorderRadius.circular(20.r),

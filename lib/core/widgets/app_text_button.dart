@@ -31,19 +31,20 @@ class AppTextButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius?? 16.0.r),
+          borderRadius: BorderRadius.circular((borderRadius ?? 16.0).r),
         ),
         backgroundColor: backgroundColor ?? AppColors.whiteColor,
         padding: EdgeInsets.symmetric(
-           horizontal: horizontalPadding?.w ?? 12.w,
-           vertical: verticalPadding?.h ?? 14.h),
-           fixedSize: Size(buttonWidth?.w ?? double.maxFinite, buttonHeight ?? 60.h)
+          horizontal: horizontalPadding?.w ?? 12.w,
+          vertical: verticalPadding?.h ?? 14.h,
+        ),
+        fixedSize: Size(
+          buttonWidth?.w ?? double.maxFinite,
+          buttonHeight ?? 60.h,
+        ),
       ),
 
-      child: Text(
-        buttonText,
-        style: textStyle,
-      ),
+      child: Text(buttonText, style: textStyle),
     );
   }
 }

@@ -18,7 +18,7 @@ class _IsRunningTabState extends State<IsRunningTab> {
     final titles = ['All', 'Available', 'Running'];
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(4.r),
       decoration: BoxDecoration(
         color: AppColors.primaryColor,
         borderRadius: BorderRadius.circular(20.r),

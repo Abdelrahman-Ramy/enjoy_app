@@ -1,5 +1,5 @@
-import 'package:enjoy_app/core/widgets/is_running_tab.dart';
 import 'package:enjoy_app/features/home/views/playstation_card.dart';
+import 'package:enjoy_app/features/home/widgets/category_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
@@ -12,7 +12,7 @@ class PlaystationBody extends StatefulWidget {
 }
 
 class _PlaystationBodyState extends State<PlaystationBody> {
-  List<Map<String, dynamic>> allDevices = [
+  List<Map<String, dynamic>> devices = [
     {"number": "01", "isRunning": true},
     {"number": "02", "isRunning": false},
     {"number": "03", "isRunning": true},
@@ -20,27 +20,23 @@ class _PlaystationBodyState extends State<PlaystationBody> {
     {"number": "05", "isRunning": true},
   ];
   List<Map<String, dynamic>> filteredDevices = [];
+  int selectedFilter = 0;
+
+  void applyFilter() {
+    filteredDevices = devices.where((device) {
+      final isRunning = device["isRunning"] == true;
+
+      if (selectedFilter == 1) return !isRunning; // Available
+      if (selectedFilter == 2) return isRunning; // Running
+
+      return true; // All
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
-    filteredDevices = allDevices;
-  }
-
-  void filterDevices(int index) {
-    if (index == 0) {
-      filteredDevices = allDevices;
-    } else if (index == 1) {
-      filteredDevices = allDevices
-          .where((d) => d["isRunning"] == false)
-          .toList();
-    } else {
-      filteredDevices = allDevices
-          .where((d) => d["isRunning"] == true)
-          .toList();
-    }
-
-    setState(() {});
+    filteredDevices = List.from(devices);
   }
 
   @override
@@ -48,7 +44,14 @@ class _PlaystationBodyState extends State<PlaystationBody> {
     return Scaffold(
       body: Column(
         children: [
-          IsRunningTab(onChanged: filterDevices),
+          // IsRunningTab(
+          //   onChanged: (index) {
+          //     setState(() {
+          //       selectedFilter = index;
+          //     });
+          //     applyFilter();
+          //   },
+          // ),
           Gap(15.h),
           Expanded(
             child: ListView.builder(
@@ -60,6 +63,7 @@ class _PlaystationBodyState extends State<PlaystationBody> {
                   child: PlaystationCard(
                     deviceNumber: device["number"],
                     cardName: 'Device',
+                    category: Categories.playstation,
                   ),
                 );
               },

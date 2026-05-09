@@ -1,25 +1,35 @@
 import 'dart:async';
 import 'package:enjoy_app/core/constant/app_colors.dart';
 import 'package:enjoy_app/core/constant/app_styles.dart';
+import 'package:enjoy_app/core/utils/session_prefs.dart';
 import 'package:enjoy_app/core/widgets/app_text_button.dart';
-import 'package:enjoy_app/features/home/widgets/custom_card_time.dart';
+import 'package:enjoy_app/features/home/widgets/calculate_elpased.dart';
+import 'package:enjoy_app/features/home/widgets/category_model.dart';
+import 'package:enjoy_app/features/home/widgets/playstation_type_bottom_sheet.dart';
+import 'package:enjoy_app/features/home/widgets/price_calculator.dart';
+import 'package:enjoy_app/features/home/widgets/session_model.dart';
+import 'package:enjoy_app/features/home/widgets/show_dialog.dart';
+import 'package:enjoy_app/features/home/widgets/start_session_bottom_sheet.dart';
 import 'package:enjoy_app/features/home/widgets/status_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // ignore: must_be_immutable
 class PlaystationCard extends StatefulWidget {
   final String deviceNumber;
   final String cardName;
+  final String category;
   final bool isType;
+  final VoidCallback? onStop;
 
   const PlaystationCard({
     super.key,
     required this.deviceNumber,
     required this.cardName,
+    required this.category,
     this.isType = true,
+    this.onStop,
   });
 
   @override
@@ -35,6 +45,9 @@ class _PlaystationCardState extends State<PlaystationCard>
   String? selectedType;
   Duration totalDuration = Duration.zero;
   int selectedIndex = -1;
+  String? psGameType; // 'single' or 'multi' for PlayStation
+
+  String get keyPrefix => "${widget.category}_${widget.deviceNumber}";
 
   @override
   void initState() {
@@ -48,7 +61,6 @@ class _PlaystationCardState extends State<PlaystationCard>
     if (state == AppLifecycleState.paused) {
       timer?.cancel();
     }
-
     if (state == AppLifecycleState.resumed) {
       loadSession();
     }
@@ -64,70 +76,155 @@ class _PlaystationCardState extends State<PlaystationCard>
   void startTimer() {
     timer?.cancel();
 
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
+    timer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      if (!mounted || startTime == null) return;
 
-      if (startTime == null) return; // 🔴 FIX 1 (crash protection)
+      Duration newElapsed = calculateElapsed(
+        startTime: startTime!,
+        selectedType: selectedType,
+        totalDuration: totalDuration,
+      );
 
-      setState(() {
-        final diff = DateTime.now().difference(startTime!);
+      // Check if session ended automatically (for fixed sessions)
+      if (selectedType == "fixed" && newElapsed == Duration.zero && isRunning) {
+        timer?.cancel();
 
-        if (selectedType == "open") {
-          elapsed = diff;
-        } else if (selectedType == "fixed") {
-          final remaining = totalDuration - diff;
+        final session = SharedPrefService.getSession(keyPrefix);
+        if (session != null) {
+          final pricePerHour = getPricePerHour();
+          final finalDuration = totalDuration; // Fixed session duration
 
-          if (remaining.isNegative) {
-            timer?.cancel();
-            isRunning = false;
-            elapsed = Duration.zero;
-          } else {
-            elapsed = remaining;
+          final updatedSession = SessionModel(
+            start: session.start,
+            type: session.type,
+            duration: finalDuration.inMinutes,
+            index: session.index,
+            price: calculatePrice(finalDuration, pricePerHour),
+            name: '${widget.cardName} #${widget.deviceNumber}',
+          );
+
+          await SharedPrefService.saveToHistory(updatedSession);
+          await SharedPrefService.clearSession(keyPrefix);
+
+          if (widget.category == Categories.playstation) {
+            await SharedPrefService.pref?.remove("${keyPrefix}_psGameType");
           }
         }
+
+        if (mounted) {
+          setState(() {
+            isRunning = false;
+            startTime = null;
+            elapsed = Duration.zero;
+            psGameType = null;
+          });
+        }
+        return;
+      }
+
+      setState(() {
+        elapsed = newElapsed;
       });
     });
   }
 
   Future<void> saveSession() async {
-    final pref = await SharedPreferences.getInstance();
+    final pricePerHour = getPricePerHour();
+    final price = calculatePrice(elapsed, pricePerHour);
 
-    await pref.setInt(
-      "start_${widget.deviceNumber}",
-      startTime!.millisecondsSinceEpoch,
+    await SharedPrefService.saveSession(
+      key: keyPrefix,
+      start: startTime!.millisecondsSinceEpoch,
+      type: selectedType ?? "open",
+      duration: totalDuration.inSeconds,
+      index: selectedIndex,
+      price: price,
+      name: '${widget.cardName} #${widget.deviceNumber}',
     );
 
-    await pref.setString("type_${widget.deviceNumber}", selectedType ?? "open");
-
-    await pref.setInt(
-      "duration_${widget.deviceNumber}",
-      totalDuration.inSeconds,
-    );
-
-    await pref.setInt("index_${widget.deviceNumber}", selectedIndex);
+    // Save PlayStation game type if applicable
+    if (widget.category == Categories.playstation && psGameType != null) {
+      await SharedPrefService.pref?.setString(
+        "${keyPrefix}_psGameType",
+        psGameType!,
+      );
+    }
   }
 
   Future<void> loadSession() async {
-    final pref = await SharedPreferences.getInstance();
+    final session = SharedPrefService.getSession(keyPrefix);
 
-    final start = pref.getInt("start_${widget.deviceNumber}");
-    final type = pref.getString("type_${widget.deviceNumber}");
-    final duration = pref.getInt("duration_${widget.deviceNumber}");
-    final index = pref.getInt("index_${widget.deviceNumber}");
-
-    if (start != null) {
-      startTime = DateTime.fromMillisecondsSinceEpoch(start);
-      selectedType = type;
-      selectedIndex = index ?? -1;
-      totalDuration = Duration(seconds: duration ?? 0);
+    if (session != null) {
+      startTime = DateTime.fromMillisecondsSinceEpoch(session.start);
+      selectedType = session.type;
+      selectedIndex = session.index;
+      totalDuration = Duration(seconds: session.duration);
       isRunning = true;
+
+      // Load PlayStation game type if applicable
+      if (widget.category == Categories.playstation) {
+        psGameType = SharedPrefService.pref?.getString(
+          "${keyPrefix}_psGameType",
+        );
+      }
+
+      final diff = DateTime.now().difference(startTime!);
+
+      if (selectedType == "open") {
+        elapsed = diff;
+      } else {
+        final remaining = totalDuration - diff;
+        elapsed = remaining.isNegative ? Duration.zero : remaining;
+      }
 
       startTimer();
     }
 
-    if (mounted) {
-      setState(() {});
+    if (mounted) setState(() {});
+  }
+
+  double calculatePrice(Duration duration, double pricePerHour) {
+    final hours = duration.inMinutes / 60;
+    return hours * pricePerHour;
+  }
+
+  double getPricePerHour() {
+    switch (widget.category) {
+
+      case Categories.playstation:
+        if (psGameType == 'multi') {
+          return 30.0;
+        }
+        return 25.0;
+      case Categories.billiards:
+        return 30.0;
+      case Categories.ping:
+        return 30.0;
+      default:
+        return 30.0;
     }
+  }
+
+  void _showStartSessionSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) {
+        return StartSessionBottomSheet(
+          onSelect: (index, type, duration) async {
+            setState(() {
+              isRunning = true;
+              startTime = DateTime.now();
+              selectedIndex = index;
+              selectedType = type;
+              totalDuration = duration;
+            });
+
+            await saveSession();
+            startTimer();
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -140,7 +237,7 @@ class _PlaystationCardState extends State<PlaystationCard>
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       child: Container(
         width: double.infinity,
-        height: isRunning == true ? 350.h : 230.h,
+        height: isRunning ? 380.h : 230.h,
         decoration: BoxDecoration(
           color: AppColors.darkPrimaryColor,
           borderRadius: BorderRadius.circular(15.r),
@@ -151,6 +248,7 @@ class _PlaystationCardState extends State<PlaystationCard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Gap(10.h),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -158,60 +256,91 @@ class _PlaystationCardState extends State<PlaystationCard>
                   StatusWidget(isRunning: isRunning),
                 ],
               ),
-              widget.isType
-                  ? Text(
-                      ' PS  #${widget.deviceNumber}',
-                      style: AppStyle.font40WhiteBold,
-                    )
-                  : Text(
-                      ' Table  #${widget.deviceNumber}',
-                      style: AppStyle.font40WhiteBold,
-                    ),
+
+              Text(
+                widget.isType
+                    ? ' PS  #${widget.deviceNumber}'
+                    : ' Table  #${widget.deviceNumber}',
+                style: AppStyle.font40WhiteBold,
+              ),
+
               Gap(5.h),
 
-              isRunning
-                  ? Container(
-                      width: double.infinity,
-                      height: 120.h,
-                      decoration: BoxDecoration(
-                        color: AppColors.primaryColor,
-                        borderRadius: BorderRadius.circular(15.r),
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Gap(8.h),
-                            Text('Time', style: AppStyle.font18GreyW500),
-                            Gap(5.h),
-                            Text(
-                              "${elapsed.inHours.toString().padLeft(2, '0')}:"
-                              "${(elapsed.inMinutes % 60).toString().padLeft(2, '0')}:"
-                              "${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}",
-                              style: AppStyle.font40WhiteBold.copyWith(
-                                fontSize: 33.sp,
-                              ),
-                            ),
-                          ],
+              if (isRunning)
+                Container(
+                  width: double.infinity,
+                  height: 120.h,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryColor,
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12.w),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Gap(8.h),
+                        Text('Time', style: AppStyle.font18GreyW500),
+                        Gap(5.h),
+                        Text(
+                          "${elapsed.inHours.toString().padLeft(2, '0')}:"
+                          "${(elapsed.inMinutes % 60).toString().padLeft(2, '0')}:"
+                          "${(elapsed.inSeconds % 60).toString().padLeft(2, '0')}",
+                          style: AppStyle.font40WhiteBold.copyWith(
+                            fontSize: 33.sp,
+                          ),
                         ),
-                      ),
-                    )
-                  : Gap(1.h),
+                      ],
+                    ),
+                  ),
+                ),
 
               Gap(30.h),
 
-              isRunning
-                  ? AppTextButton(
+              if (isRunning)
+                Column(
+                  children: [
+                    PriceCalculator(
+                      duration: diff,
+                      pricePerHour: getPricePerHour(),
+                    ),
+
+                    Gap(12.h),
+
+                    AppTextButton(
                       buttonText: 'END SECTION',
                       backgroundColor: AppColors.redColor,
                       textStyle: AppStyle.font18WhiteW500,
-                      onPressed: () {
+                      onPressed: () async {
                         timer?.cancel();
 
                         final finalDuration = startTime == null
                             ? Duration.zero
                             : DateTime.now().difference(startTime!);
+
+                        final session = SharedPrefService.getSession(keyPrefix);
+
+                        if (session != null) {
+                          final pricePerHour = getPricePerHour();
+                          final updatedSession = SessionModel(
+                            start: session.start,
+                            type: session.type,
+                            duration: finalDuration.inMinutes,
+                            index: session.index,
+                            price: calculatePrice(finalDuration, pricePerHour),
+                            name: '${widget.cardName} #${widget.deviceNumber}',
+                          );
+
+                          await SharedPrefService.saveToHistory(updatedSession);
+                          await SharedPrefService.clearSession(keyPrefix);
+
+                          // Clear PlayStation game type
+                          if (widget.category == Categories.playstation) {
+                            await SharedPrefService.pref?.remove(
+                              "${keyPrefix}_psGameType",
+                            );
+                          }
+                        }
 
                         showSummaryDialog(context, finalDuration);
 
@@ -219,176 +348,41 @@ class _PlaystationCardState extends State<PlaystationCard>
                           isRunning = false;
                           startTime = null;
                           elapsed = Duration.zero;
+                          psGameType = null;
                         });
                       },
-                    )
-                  : AppTextButton(
-                      buttonText: 'START SECTION',
-                      backgroundColor: AppColors.greenColor,
-                      textStyle: AppStyle.font18WhiteW500,
-                      onPressed: () {
-                        showBottomSheet(
-                          elevation: 0,
-                          backgroundColor: AppColors.primaryColor,
-                          context: context,
-                          builder: (context) {
-                            return StatefulBuilder(
-                              builder: (context, sheetSetState) {
-                                return Container(
-                                  height: 500.h,
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primaryColor,
-                                    borderRadius: BorderRadius.circular(20.r),
-                                  ),
-                                  child: Column(
-                                    children: [
-                                      Gap(20.h),
-
-                                      Expanded(
-                                        child: GridView.count(
-                                          crossAxisCount: 2,
-                                          childAspectRatio: 1.4,
-                                          children: [
-                                            CustomCardTime(
-                                              timeType: '1/2',
-                                              index: 0,
-                                              isSelected: selectedIndex == 0,
-                                              onTap: () {
-                                                sheetSetState(() {
-                                                  selectedIndex = 0;
-                                                  selectedType = "fixed";
-                                                  totalDuration =
-                                                      const Duration(
-                                                        minutes: 30,
-                                                      );
-                                                });
-                                              },
-                                            ),
-                                            CustomCardTime(
-                                              timeType: '1',
-                                              index: 1,
-                                              isSelected: selectedIndex == 1,
-                                              onTap: () {
-                                                sheetSetState(() {
-                                                  selectedIndex = 1;
-                                                  selectedType = "fixed";
-                                                  totalDuration =
-                                                      const Duration(hours: 1);
-                                                });
-                                              },
-                                            ),
-                                            CustomCardTime(
-                                              timeType: '2',
-                                              index: 2,
-                                              isSelected: selectedIndex == 2,
-                                              onTap: () {
-                                                sheetSetState(() {
-                                                  selectedIndex = 2;
-                                                  selectedType = "fixed";
-                                                  totalDuration =
-                                                      const Duration(hours: 2);
-                                                });
-                                              },
-                                            ),
-                                            CustomCardTime(
-                                              timeType: 'Open',
-                                              index: 3,
-                                              isSelected: selectedIndex == 3,
-                                              onTap: () {
-                                                sheetSetState(() {
-                                                  selectedIndex = 3;
-                                                  selectedType = "open";
-                                                });
-                                              },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-
-                                      Padding(
-                                        padding: EdgeInsets.all(15.w),
-                                        child: AppTextButton(
-                                          backgroundColor: AppColors.pinkColor,
-                                          buttonText: 'Start',
-                                          textStyle: AppStyle.font35WhiteBold
-                                              .copyWith(fontSize: 30.sp),
-                                          onPressed: () async {
-                                            final selected = selectedIndex;
-
-                                            Navigator.pop(context);
-
-                                            setState(() {
-                                              isRunning = true;
-                                              startTime = DateTime.now();
-                                              selectedIndex = selected;
-                                            });
-
-                                            await saveSession();
-                                            startTimer();
-                                          },
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        );
-                      },
                     ),
+                  ],
+                )
+              else
+                AppTextButton(
+                  buttonText: 'START SECTION',
+                  backgroundColor: AppColors.greenColor,
+                  textStyle: AppStyle.font18WhiteW500,
+                  onPressed: () {
+                    if (widget.category == Categories.playstation) {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (_) {
+                          return PlaystationTypeBottomSheet(
+                            onSelect: (gameType) {
+                              setState(() {
+                                psGameType = gameType;
+                              });
+                              _showStartSessionSheet();
+                            },
+                          );
+                        },
+                      );
+                    } else {
+                      _showStartSessionSheet();
+                    }
+                  },
+                ),
             ],
           ),
         ),
       ),
     );
   }
-}
-
-double calculatePrice(Duration duration) {
-  final hours = duration.inMinutes / 60;
-  return hours * 20;
-}
-
-void showSummaryDialog(BuildContext context, Duration duration) {
-  final price = calculatePrice(duration);
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        backgroundColor: Colors.black,
-        title: const Text(
-          "Session Summary",
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Time: ${duration.inHours.toString().padLeft(2, '0')}:"
-              "${(duration.inMinutes % 60).toString().padLeft(2, '0')}:"
-              "${(duration.inSeconds % 60).toString().padLeft(2, '0')}",
-              style: const TextStyle(color: Colors.white),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              "Price: ${price.toStringAsFixed(2)} EGP",
-              style: const TextStyle(
-                color: Colors.green,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      );
-    },
-  );
 }
