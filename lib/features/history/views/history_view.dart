@@ -161,7 +161,7 @@ class _HistoryViewState extends State<HistoryView> {
       body: history.isEmpty
           ? const Center(
               child: Text(
-                "No History Yet",
+                "No Sessions Yet",
                 style: TextStyle(color: AppColors.greyColor),
               ),
             )
@@ -215,7 +215,7 @@ class _HistoryViewState extends State<HistoryView> {
                             padding: EdgeInsets.all(14.r),
                             decoration: BoxDecoration(
                               border: Border.all(color: AppColors.pinkColor),
-                              color: AppColors.darkPrimaryColor,
+                              color: const Color.fromARGB(255, 172, 170, 210),
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Column(

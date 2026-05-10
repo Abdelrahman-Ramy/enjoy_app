@@ -39,6 +39,17 @@ dependencies:
   gap: ^3.0.1
   shared_preferences: ^2.5.5
   intl: ^0.20.2
+  flutter_launcher_icons: ^0.14.4
+  lottie: ^3.3.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+
+  image_path: "assets/images/playstation-app-logo.png"
+
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: "assets/images/playstation-app-logo.png"
 
 dev_dependencies:
   flutter_test:
@@ -63,8 +74,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+  assets:
+    - assets/images/
+    - assets/animations/
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

@@ -4,6 +4,53 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:gap/gap.dart';
 
+void showEndSessionConfirmation(BuildContext context, VoidCallback onConfirm) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.darkPrimaryColor,
+        title: const Text(
+          "End Session",
+          style: TextStyle(color: AppColors.whiteColor),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          "Do you want to end this session?",
+          style: TextStyle(color: AppColors.whiteColor),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "No",
+              style: AppStyle.font15GreyW500.copyWith(
+                color: AppColors.whiteColor,
+              ),
+            ),
+          ),
+          TextButton(
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(AppColors.pinkColor),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: Text(
+              "Yes",
+              style: AppStyle.font15GreyW500.copyWith(
+                color: AppColors.whiteColor,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 void showSummaryDialog(BuildContext context, Duration duration) {
   final price = calculatePrice(duration);
   showDialog(
@@ -19,7 +66,7 @@ void showSummaryDialog(BuildContext context, Duration duration) {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-        Gap(5.h),
+            Gap(5.h),
             Text(
               "Time: ${duration.inHours.toString().padLeft(2, '0')}:"
               "${(duration.inMinutes % 60).toString().padLeft(2, '0')}:"
@@ -29,24 +76,30 @@ void showSummaryDialog(BuildContext context, Duration duration) {
             Gap(10.h),
             Text(
               "Price: ${price.toStringAsFixed(2)} EGP",
-              style:  AppStyle.font18WhiteW500.copyWith(color: AppColors.greenLightColor)
+              style: AppStyle.font18WhiteW500.copyWith(
+                color: AppColors.greenLightColor,
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.all(AppColors.pinkColor)
+              backgroundColor: WidgetStateProperty.all(AppColors.pinkColor),
             ),
             onPressed: () => Navigator.pop(context),
-            child: Text("OK",style: AppStyle.font15GreyW500.copyWith(color: AppColors.whiteColor),),
+            child: Text(
+              "OK",
+              style: AppStyle.font15GreyW500.copyWith(
+                color: AppColors.whiteColor,
+              ),
+            ),
           ),
         ],
       );
     },
   );
 }
-
 
 double calculatePrice(Duration duration) {
   final hours = duration.inMinutes / 60;

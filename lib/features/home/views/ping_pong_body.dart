@@ -15,7 +15,7 @@ class PingPongBody extends StatelessWidget {
           children: [
             Gap(70.h),
             const PlaystationCard(
-              cardName: 'Table',
+              cardName: 'Ping',
               isType: false,
               deviceNumber: '01',
               category: Categories.ping,

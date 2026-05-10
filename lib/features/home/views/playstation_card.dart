@@ -190,7 +190,6 @@ class _PlaystationCardState extends State<PlaystationCard>
 
   double getPricePerHour() {
     switch (widget.category) {
-
       case Categories.playstation:
         if (psGameType == 'multi') {
           return 30.0;
@@ -311,44 +310,54 @@ class _PlaystationCardState extends State<PlaystationCard>
                       buttonText: 'END SECTION',
                       backgroundColor: AppColors.redColor,
                       textStyle: AppStyle.font18WhiteW500,
-                      onPressed: () async {
-                        timer?.cancel();
+                      onPressed: () {
+                        showEndSessionConfirmation(context, () async {
+                          timer?.cancel();
 
-                        final finalDuration = startTime == null
-                            ? Duration.zero
-                            : DateTime.now().difference(startTime!);
+                          final finalDuration = startTime == null
+                              ? Duration.zero
+                              : DateTime.now().difference(startTime!);
 
-                        final session = SharedPrefService.getSession(keyPrefix);
-
-                        if (session != null) {
-                          final pricePerHour = getPricePerHour();
-                          final updatedSession = SessionModel(
-                            start: session.start,
-                            type: session.type,
-                            duration: finalDuration.inMinutes,
-                            index: session.index,
-                            price: calculatePrice(finalDuration, pricePerHour),
-                            name: '${widget.cardName} #${widget.deviceNumber}',
+                          final session = SharedPrefService.getSession(
+                            keyPrefix,
                           );
 
-                          await SharedPrefService.saveToHistory(updatedSession);
-                          await SharedPrefService.clearSession(keyPrefix);
-
-                          // Clear PlayStation game type
-                          if (widget.category == Categories.playstation) {
-                            await SharedPrefService.pref?.remove(
-                              "${keyPrefix}_psGameType",
+                          if (session != null) {
+                            final pricePerHour = getPricePerHour();
+                            final updatedSession = SessionModel(
+                              start: session.start,
+                              type: session.type,
+                              duration: finalDuration.inMinutes,
+                              index: session.index,
+                              price: calculatePrice(
+                                finalDuration,
+                                pricePerHour,
+                              ),
+                              name:
+                                  '${widget.cardName} #${widget.deviceNumber}',
                             );
+
+                            await SharedPrefService.saveToHistory(
+                              updatedSession,
+                            );
+                            await SharedPrefService.clearSession(keyPrefix);
+
+                            // Clear PlayStation game type
+                            if (widget.category == Categories.playstation) {
+                              await SharedPrefService.pref?.remove(
+                                "${keyPrefix}_psGameType",
+                              );
+                            }
                           }
-                        }
 
-                        showSummaryDialog(context, finalDuration);
+                          showSummaryDialog(context, finalDuration);
 
-                        setState(() {
-                          isRunning = false;
-                          startTime = null;
-                          elapsed = Duration.zero;
-                          psGameType = null;
+                          setState(() {
+                            isRunning = false;
+                            startTime = null;
+                            elapsed = Duration.zero;
+                            psGameType = null;
+                          });
                         });
                       },
                     ),
