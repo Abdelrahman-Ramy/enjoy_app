@@ -59,7 +59,7 @@ class _PlaystationBodyState extends State<PlaystationBody> {
               itemBuilder: (context, index) {
                 final device = filteredDevices[index];
                 return Padding(
-                  padding: EdgeInsets.only(bottom: 12.h),
+                  padding: EdgeInsets.only(bottom: 30.h),
                   child: PlaystationCard(
                     deviceNumber: device["number"],
                     cardName: 'Device',

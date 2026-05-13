@@ -1,6 +1,7 @@
 import 'package:enjoy_app/core/constant/app_colors.dart';
 import 'package:enjoy_app/core/constant/app_styles.dart';
 import 'package:enjoy_app/core/utils/session_prefs.dart';
+import 'package:enjoy_app/features/home/widgets/show_dialog.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -46,11 +47,17 @@ class SettingsView extends StatelessWidget {
                 backgroundColor: AppColors.redColor,
                 foregroundColor: AppColors.redColor,
               ),
-              onPressed: () async {
-                await SharedPrefService.clearHistory();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("History Cleared Successfully")),
-                );
+              onPressed: () {
+                showClearHistoryConfirmation(context, () async {
+                  await SharedPrefService.clearHistory();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("History Cleared Successfully"),
+                      ),
+                    );
+                  }
+                });
               },
               child: Text(
                 'Clear History',

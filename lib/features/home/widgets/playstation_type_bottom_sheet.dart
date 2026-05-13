@@ -34,10 +34,7 @@ class _PlaystationTypeBottomSheetState
           children: [
             Text(
               'Select Game Mode',
-              style: AppStyle.font24PrimaryBold.copyWith(
-                color: AppColors.whiteColor,
-                fontSize: 22.sp,
-              ),
+              style: AppStyle.font25WhiteBold
             ),
             Gap(30.h),
             Expanded(

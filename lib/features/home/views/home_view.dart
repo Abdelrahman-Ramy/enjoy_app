@@ -61,7 +61,7 @@ class _HomeViewState extends State<HomeView> {
           ),
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 5.w),
+          padding: EdgeInsets.symmetric(horizontal: 12.w),
           child: Column(
             children: [
               Gap(5.h),

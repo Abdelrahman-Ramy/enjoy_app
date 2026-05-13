@@ -27,80 +27,84 @@ class _StartSessionBottomSheetState extends State<StartSessionBottomSheet> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.primaryColor,
-        borderRadius: BorderRadius.circular(20.r),
-      ),
-      child: Column(
-        children: [
-          Gap(20.h),
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 2,
-              childAspectRatio: 1.4,
-              children: [
-                CustomCardTime(
-                  timeType: '1/2',
-                  index: 0,
-                  isSelected: selectedIndex == 0,
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 0;
-                      selectedType = "fixed";
-                      totalDuration = const Duration(minutes: 30);
-                    });
-                  },
-                ),
-                CustomCardTime(
-                  timeType: '1',
-                  index: 1,
-                  isSelected: selectedIndex == 1,
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 1;
-                      selectedType = "fixed";
-                      totalDuration = const Duration(hours: 1);
-                    });
-                  },
-                ),
-                CustomCardTime(
-                  timeType: '2',
-                  index: 2,
-                  isSelected: selectedIndex == 2,
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 2;
-                      selectedType = "fixed";
-                      totalDuration = const Duration(hours: 2);
-                    });
-                  },
-                ),
-                CustomCardTime(
-                  timeType: 'Open',
-                  index: 3,
-                  isSelected: selectedIndex == 3,
-                  onTap: () {
-                    setState(() {
-                      selectedIndex = 3;
-                      selectedType = "open";
-                    });
-                  },
-                ),
-              ],
+borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),      ),
+      child: Padding(
+        padding: EdgeInsets.all(8.r),
+        child: Column(
+          children: [
+            Gap(10.h),
+            Text('Select Time', style: AppStyle.font25WhiteBold),
+            Gap(15.h),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                childAspectRatio: 1.2,
+                children: [
+                  CustomCardTime(
+                    timeType: '1/2',
+                    index: 0,
+                    isSelected: selectedIndex == 0,
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 0;
+                        selectedType = "fixed";
+                        totalDuration = const Duration(minutes: 30);
+                      });
+                    },
+                  ),
+                  CustomCardTime(
+                    timeType: '1',
+                    index: 1,
+                    isSelected: selectedIndex == 1,
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 1;
+                        selectedType = "fixed";
+                        totalDuration = const Duration(hours: 1);
+                      });
+                    },
+                  ),
+                  CustomCardTime(
+                    timeType: '2',
+                    index: 2,
+                    isSelected: selectedIndex == 2,
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 2;
+                        selectedType = "fixed";
+                        totalDuration = const Duration(hours: 2);
+                      });
+                    },
+                  ),
+                  CustomCardTime(
+                    timeType: 'Open',
+                    index: 3,
+                    isSelected: selectedIndex == 3,
+                    onTap: () {
+                      setState(() {
+                        selectedIndex = 3;
+                        selectedType = "open";
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
-            child: AppTextButton(
-              backgroundColor: AppColors.pinkColor,
-              buttonText: 'Start',
-              textStyle: AppStyle.font35WhiteBold.copyWith(fontSize: 28.sp),
-              onPressed: () {
-                if (selectedType == null) return;
-                widget.onSelect(selectedIndex, selectedType!, totalDuration);
-                Navigator.pop(context);
-              },
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 15.w, vertical: 15.h),
+              child: AppTextButton(
+                backgroundColor: AppColors.pinkColor,
+                buttonText: 'Start',
+                textStyle: AppStyle.font35WhiteBold.copyWith(fontSize: 28.sp),
+                onPressed: () {
+                  if (selectedType == null) return;
+                  widget.onSelect(selectedIndex, selectedType!, totalDuration);
+                  Navigator.pop(context);
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

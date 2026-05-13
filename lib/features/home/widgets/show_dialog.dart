@@ -51,8 +51,77 @@ void showEndSessionConfirmation(BuildContext context, VoidCallback onConfirm) {
   );
 }
 
-void showSummaryDialog(BuildContext context, Duration duration) {
-  final price = calculatePrice(duration);
+void showClearHistoryConfirmation(
+  BuildContext context,
+  VoidCallback onConfirm,
+) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: AppColors.darkPrimaryColor,
+        title: const Text(
+          "Clear History",
+          style: TextStyle(color: AppColors.whiteColor),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          "Are you sure you want to clear all history? This action cannot be undone.",
+          style: TextStyle(color: AppColors.whiteColor),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              "Cancel",
+              style: AppStyle.font15GreyW500.copyWith(
+                color: AppColors.whiteColor,
+              ),
+            ),
+          ),
+          TextButton(
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(AppColors.redColor),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onConfirm();
+            },
+            child: Text(
+              "Clear",
+              style: AppStyle.font15GreyW500.copyWith(
+                color: AppColors.whiteColor,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void showSummaryDialog(
+  BuildContext context,
+  Duration duration, {
+  double? totalPrice,
+  List? orders,
+}) {
+  // Calculate orders total
+  double ordersTotal = 0;
+  if (orders != null) {
+    for (final order in orders) {
+      ordersTotal += order.price;
+    }
+  }
+
+  // Calculate base price: if totalPrice is provided, subtract orders; otherwise calculate from duration
+  final basePriceDisplay = totalPrice != null
+      ? (totalPrice - ordersTotal)
+      : calculatePrice(duration);
+
+  final totalDisplayPrice = totalPrice ?? calculatePrice(duration);
+
   showDialog(
     context: context,
     builder: (context) {
@@ -74,10 +143,29 @@ void showSummaryDialog(BuildContext context, Duration duration) {
               style: AppStyle.font18WhiteW500,
             ),
             Gap(10.h),
+            // ORDERS PRICE
+            if (ordersTotal > 0)
+              Text(
+                "Orders: ${ordersTotal.toStringAsFixed(2)} EGP",
+                style: AppStyle.font18WhiteW500.copyWith(
+                  color: Colors.orangeAccent,
+                ),
+              ),
+            if (ordersTotal > 0) Gap(6.h),
+            // SESSION BASE PRICE
             Text(
-              "Price: ${price.toStringAsFixed(2)} EGP",
+              "Session: ${basePriceDisplay.toStringAsFixed(2)} EGP",
+              style: AppStyle.font18WhiteW500.copyWith(
+                color: Colors.blueAccent,
+              ),
+            ),
+            Gap(6.h),
+            // TOTAL PRICE
+            Text(
+              "Total: ${totalDisplayPrice.toStringAsFixed(2)} EGP",
               style: AppStyle.font18WhiteW500.copyWith(
                 color: AppColors.greenLightColor,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],

@@ -97,16 +97,17 @@ class _HistoryViewState extends State<HistoryView> {
                       horizontal: 12.w,
                       vertical: 8.h,
                     ),
-                    padding: EdgeInsets.all(12.r),
+                    padding: EdgeInsets.all(15.r),
                     decoration: BoxDecoration(
                       color: selectedDate == dateKey
-                          ? AppColors.pinkColor
+                          ? AppColors.primaryColor
                           : AppColors.primaryColor,
                       borderRadius: BorderRadius.circular(8.r),
                       border: Border.all(
+                        width: 2,
                         color: selectedDate == dateKey
                             ? AppColors.pinkColor
-                            : AppColors.greyColor,
+                            : AppColors.darkPrimaryColor,
                       ),
                     ),
                     child: Text(
@@ -114,7 +115,7 @@ class _HistoryViewState extends State<HistoryView> {
                       textAlign: TextAlign.center,
                       style: AppStyle.font18GreyW500.copyWith(
                         color: selectedDate == dateKey
-                            ? AppColors.darkPrimaryColor
+                            ? AppColors.whiteColor
                             : AppColors.whiteColor,
                         fontWeight: FontWeight.bold,
                       ),
@@ -191,7 +192,7 @@ class _HistoryViewState extends State<HistoryView> {
                                   _formatDateHeader(displayDate),
                                   textAlign: TextAlign.center,
                                   style: AppStyle.font20BlackW500.copyWith(
-                                    color: AppColors.pinkColor,
+                                    color: AppColors.whiteColor,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -215,18 +216,33 @@ class _HistoryViewState extends State<HistoryView> {
                             padding: EdgeInsets.all(14.r),
                             decoration: BoxDecoration(
                               border: Border.all(color: AppColors.pinkColor),
-                              color: const Color.fromARGB(255, 172, 170, 210),
+                              color: AppColors.darkPrimaryColor,
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // DEVICE NAME
-                                Text(
-                                  session.name,
-                                  style: AppStyle.font24PrimaryBold.copyWith(
-                                    color: AppColors.whiteColor,
-                                  ),
+                                // DEVICE NAME WITH PLAYSTATION TYPE
+                                Builder(
+                                  builder: (context) {
+                                    // Display PlayStation type if available
+                                    String deviceLabel = session.name;
+                                    Color labelColor = AppColors.whiteColor;
+
+                                    if (session.psGameType != null) {
+                                      deviceLabel =
+                                          "${session.name} - ${session.psGameType}";
+                                      labelColor = session.psGameType == "multi"
+                                          ? Colors.purpleAccent
+                                          : Colors.blueAccent;
+                                    }
+
+                                    return Text(
+                                      deviceLabel,
+                                      style: AppStyle.font24PrimaryBold
+                                          .copyWith(color: labelColor),
+                                    );
+                                  },
                                 ),
                                 Gap(10.h),
                                 // TIME RANGE
@@ -252,18 +268,118 @@ class _HistoryViewState extends State<HistoryView> {
                                   },
                                 ),
                                 Gap(10.h),
-                                // DURATION
-                                Text(
-                                  "Duration: ${session.duration} min",
-                                  style: AppStyle.font18GreyW500,
+                                // DURATION - Format based on length
+                                Builder(
+                                  builder: (context) {
+                                    final hours = session.duration ~/ 60;
+                                    final minutes = session.duration % 60;
+
+                                    String durationText;
+                                    if (session.duration < 60) {
+                                      // Less than 1 hour: show as minutes
+                                      durationText = "${session.duration} min";
+                                    } else if (minutes == 0) {
+                                      // Exact hours
+                                      durationText = "$hours h";
+                                    } else {
+                                      // Hours and minutes
+                                      durationText = "${hours}h ${minutes}m";
+                                    }
+
+                                    return Text(
+                                      "Duration: $durationText",
+                                      style: AppStyle.font18GreyW500,
+                                    );
+                                  },
                                 ),
                                 Gap(6.h),
-                                // PRICE
-                                Text(
-                                  "Price: ${session.price.toStringAsFixed(2)} EGP",
-                                  style: AppStyle.font20BlackW500.copyWith(
-                                    color: Colors.greenAccent,
-                                  ),
+                                // CALCULATE PRICES
+                                Builder(
+                                  builder: (context) {
+                                    // Calculate orders total
+                                    double ordersTotal = 0;
+                                    for (final order in session.orders) {
+                                      ordersTotal += order.price;
+                                    }
+
+                                    // Base price = stored total - orders
+                                    final basePrice =
+                                        session.price - ordersTotal;
+
+                                    // Total price = base + orders
+                                    final totalPrice = session.price;
+
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // ORDERS DETAILS
+                                        if (session.orders.isNotEmpty) ...[
+                                          Text(
+                                            "Orders:",
+                                            style: AppStyle.font18GreyW500
+                                                .copyWith(
+                                                  color: Colors.orangeAccent,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                          ),
+                                          Gap(3.h),
+                                          ...session.orders.map((order) {
+                                            return Padding(
+                                              padding: EdgeInsets.only(
+                                                bottom: 2.h,
+                                                left: 8.w,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "• ${order.name} : ${order.price.toStringAsFixed(2)}",
+                                                    style: AppStyle
+                                                        .font16WhiteW500
+                                                        .copyWith(
+                                                          color: Colors
+                                                              .orangeAccent,
+                                                        ),
+                                                  ),
+                                                  Text(
+                                                    "• note: ${order.note ?? "...."}",
+                                                    style: AppStyle
+                                                        .font16WhiteW500
+                                                        .copyWith(
+                                                          color: Colors
+                                                              .orangeAccent,
+                                                        ),
+                                                  ),
+                                                  const Divider(thickness: 0.5),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                          Gap(6.h),
+                                        ],
+                                        // SESSION BASE PRICE
+                                        Text(
+                                          "Session: ${basePrice.toStringAsFixed(2)} EGP",
+                                          style: AppStyle.font18GreyW500
+                                              .copyWith(
+                                                color: Colors.blueAccent,
+                                              ),
+                                        ),
+                                        Gap(4.h),
+                                        // TOTAL PRICE
+                                        Text(
+                                          "Total: ${totalPrice.toStringAsFixed(2)} EGP",
+                                          style: AppStyle.font20BlackW500
+                                              .copyWith(
+                                                color: Colors.greenAccent,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
+                                      ],
+                                    );
+                                  },
                                 ),
                               ],
                             ),

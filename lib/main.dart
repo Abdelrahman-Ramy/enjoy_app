@@ -10,8 +10,13 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedPrefService.init();
+  
+  // Migrate old history format to JSON (safe to call multiple times)
+  await SharedPrefService.migrateOldHistory();
+  
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

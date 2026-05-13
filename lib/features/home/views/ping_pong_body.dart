@@ -13,7 +13,7 @@ class PingPongBody extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Gap(70.h),
+            Gap(20.h),
             const PlaystationCard(
               cardName: 'Ping',
               isType: false,

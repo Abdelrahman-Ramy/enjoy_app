@@ -13,14 +13,14 @@ class BilliardsBody extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            Gap(70.h),
+            Gap(20.h),
             const PlaystationCard(
               cardName: 'Billiards',
               isType: false,
               deviceNumber: '01',
                category: Categories.billiards,
             ),
-            Gap(12.h),
+            Gap(30.h),
             const PlaystationCard(
               cardName: 'Billiards',
               isType: false,
